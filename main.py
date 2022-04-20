@@ -47,6 +47,7 @@ def motion(event): # update the (x,y) position of the mouse and draw the hover l
         hover_label.place_forget()
     else:
         hover_label.place(anchor="nw",x=x+10,y=y+10)
+        hover_label.lift()
 
 def component_meets_conditions(name,w,h,color,shape,show_errors=True): # Return a bool based on if a component meets the conditions to add
     conditions_met = True
@@ -396,7 +397,7 @@ class Wire(): # wire connecting two components
                     wires.remove(wire)
                     canvas.delete(wire[1])
                     self.hover_off()
-                    show_message("deleted from %s (%s) to %s %s"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
+                    show_message("deleted from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
                     del self
         except IndexError:
             pass
@@ -438,8 +439,9 @@ class Wire(): # wire connecting two components
             x1,y1,x2,y2 = canvas.coords(self.drawing)
             self.wire_from_label.place(anchor="center",x=x1,y=y1)
             self.wire_to_label.place(anchor="center",x=x2,y=y2)
-            self.wire_from_label.lift()
-            self.wire_to_label.lift()
+            if (hover_text == ""):
+                self.wire_from_label.lift()
+                self.wire_to_label.lift()
         else:
             self.wire_from_label.place_forget()
             self.wire_to_label.place_forget()
@@ -504,7 +506,6 @@ class Component(): # an element in the workspace
             hover_text = self.name
             canvas.itemconfig(self.drawing,outline="yellow")
             connected_wires = get_wires_to_component(self)
-            print(connected_wires)
             for wire in connected_wires:
                 wire.show_labels = True
 
