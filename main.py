@@ -355,11 +355,11 @@ class Workspace(): # where all the components, wires], etc. exist
             wire_preview = None
         # Cursor
         if (state == "idle"):
-            canvas.configure(cursor=CURSOR_IDLE)
+            root.configure(cursor=CURSOR_IDLE)
         elif (state == "wire"):
-            canvas.configure(cursor=CURSOR_WIRE)
+            root.configure(cursor=CURSOR_WIRE)
         elif (state == "moving"):
-            canvas.configure(cursor=CURSOR_MOVING)
+            root.configure(cursor=CURSOR_MOVING)
         # Run infinitely
         root.after(UPDATE_SPEED,self.update)
 
@@ -397,7 +397,7 @@ class Wire(): # wire connecting two components
                     wires.remove(wire)
                     canvas.delete(wire[1])
                     self.hover_off()
-                    show_message("deleted from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
+                    show_message("deleted wire from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
                     del self
         except IndexError:
             pass
@@ -694,9 +694,9 @@ new_component_button = tkButton.Button(panel,text="+ NEW COMPONENT",bg=BUTTON_CO
 new_component_button.place(anchor="n",relx=0.5,rely=0.05)
 new_component_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
-# Wires Setup
+# Add Wires Setup
 panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.92)
-wire_buttons_frame = tkinter.Frame(panel,bg=ROOT_BACKGROUND_COLOR,width=300,height=50)
+wire_buttons_frame = tkinter.Frame(panel,bg=MENU_BACKGROUND_COLOR,width=300,height=50)
 wire_buttons_frame.place(anchor="s",relx=0.5,rely=1)
 for color in WIRE_COLORS:
     wire_buttons.append(tkButton.Button(wire_buttons_frame,width=30,height=30,text=" ",bg=wire_color(color),command=lambda x=color:select_wire(x)))

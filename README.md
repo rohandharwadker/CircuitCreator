@@ -6,3 +6,6 @@ A simple way to organize components and plan wiring patterns in a project before
 - Fix component name appearing below pin names
 - Fix formatting inconsistency in alerts
 - Fix console outputting debugging content
+
+### Version 1.0.2 (April 2022)
+- Minor styling changes

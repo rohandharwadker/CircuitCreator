@@ -1,5 +1,5 @@
 # Info
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 DEVELOPER = "Rohan Dharwadker"
 PRODUCT = "CircuitCreator"
 
@@ -40,7 +40,7 @@ elif (PERFORMANCE_MODE == "LOW"):
     WIRE_UPDATE_SPEED = 1000
 
 # Wires
-WIRE_COLORS = ["Red","Black","Green","Blue","Purple"] # Exactly 5 colors allowed
+WIRE_COLORS = ["Red","Black","White","Yellow","Purple"] # Exactly 5 colors allowed
 MAX_PIN_CHARACTERS = 5
 
 # Components
