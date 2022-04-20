@@ -1,3 +1,11 @@
+"""
+
+DISCLAIMER: tkButton is another project created by me that I use in CircuitCreator. 
+The tkButton Library is located at https://github.com/rohandharwadker/tkButton
+
+"""
+
+
 import tkinter as tk
 
 class Button():
