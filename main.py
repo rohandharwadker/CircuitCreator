@@ -289,18 +289,15 @@ def save(item,file):
     with open(file,"wb") as f:
         pickle.dump(item,f)
     f.close()
-    print("save: %s"%str(file))
 
 def load(file,empty_return_value=None):
     if (os.path.exists(file)):
         with open(file,"rb") as f:
-            print("load: %s"%str(file))
             return pickle.load(f)
     else:
         return empty_return_value
 
 def save_session(workspace):
-    print("saving session...")
     _wires = []
     for wire in wires:
         w = []
@@ -319,6 +316,7 @@ def save_session(workspace):
     if (os.path.exists(SAVE_FILE_PATH)):
         os.remove(SAVE_FILE_PATH)
     save(save_content,SAVE_FILE_PATH)
+    show_message("Workspace Saved.")
 
 def load_session(file=SAVE_FILE_PATH):
     global selected_wire_color
@@ -343,12 +341,20 @@ def load_session(file=SAVE_FILE_PATH):
         new_wire.set_pin_names(wire[-3][0],wire[-3][1])
         new_wire.draw()
         current_wire = [None,None]
+    show_message("Successfully Loaded Workspace.")
 
 def question_exit():
     exit = messagebox.askokcancel("","Exit?\n\nYour current session will be saved.")
     if (exit):
         save_session(workspace)
-        root.destroy()
+        exit()
+
+def save_and_exit():
+    save_session(workspace)
+    exit()
+
+def exit():
+    root.destroy()
 
 class Workspace(): # where all the components, wires], etc. exist
     x = 0
@@ -685,6 +691,17 @@ root.configure(bg="lime")
 root.title("CircuitCreator v%s"%(VERSION))
 root.bind("<Button-1>",handle_global_click)
 root.protocol("WM_DELETE_WINDOW", question_exit)
+
+# Menu Bar Setup
+menu = tkinter.Menu(root)
+file_menu = tkinter.Menu(menu,tearoff=0)
+file_menu.add_command(label="Save", command=lambda: save_session(workspace))
+file_menu.add_separator()
+file_menu.add_command(label="Exit Without Saving", command=exit)
+file_menu.add_command(label="Save and Exit",command=save_and_exit)
+
+menu.add_cascade(label="File",menu=file_menu)
+root.configure(menu=menu)
 
 # Canvas Setup
 canvas = tkinter.Canvas(root,width=1200,height=700,bg=ROOT_BACKGROUND_COLOR,highlightthickness=0)

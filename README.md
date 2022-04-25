@@ -14,3 +14,7 @@ A simple way to organize components and plan wiring patterns in a project before
 - Save/Load workspace
 - Minor styline changes
 - Bug fixes
+
+# Version 2.0.1 (April 2022)
+- Add menu bar
+- Bug fixes
