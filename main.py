@@ -1,7 +1,10 @@
+import pickle
+import os
 import tkinter
 import tkButton
 import sys
 from config import *
+from tkinter import messagebox
 
 
 
@@ -19,6 +22,7 @@ wires = [] # wires currently existing in the workspace
 current_wire = [None,None] # the current wire pairing
 selected_wire_color = "" # the currently selected wire color
 wire_preview = None # the wire preview drawing
+new_component_id = 0 # the next component id
 
 
 
@@ -271,6 +275,8 @@ def close_wire_add_menu(wire):
         state = "idle"
         wire.set_pin_names(name1,name2)
         add_wire_frame.place_forget()
+    add_wire_pin1_entry.delete(0,tkinter.END)
+    add_wire_pin2_entry.delete(0,tkinter.END)
 
 def get_wires_to_component(component): # get all wires connected to a given component
     connected_wires = []
@@ -278,6 +284,71 @@ def get_wires_to_component(component): # get all wires connected to a given comp
         if (wire[3] == component or wire[6] == component):
             connected_wires.append(wire[0])
     return connected_wires
+
+def save(item,file):
+    with open(file,"wb") as f:
+        pickle.dump(item,f)
+    f.close()
+    print("save: %s"%str(file))
+
+def load(file,empty_return_value=None):
+    if (os.path.exists(file)):
+        with open(file,"rb") as f:
+            print("load: %s"%str(file))
+            return pickle.load(f)
+    else:
+        return empty_return_value
+
+def save_session(workspace):
+    print("saving session...")
+    _wires = []
+    for wire in wires:
+        w = []
+        for item in wire:
+            w.append(item)
+        _wires.append(w)
+    for wire in _wires:
+        wire[0].drawing = None
+        wire[0].wire_from_label = None
+        wire[0].wire_to_label = None
+        wire.append(wire[0].get_pin_names())
+        wire.append(wire[0].initial_component.id)
+        wire.append(wire[0].final_component.id)
+    _components = workspace.components
+    save_content = {"components":_components,"wires":_wires}
+    if (os.path.exists(SAVE_FILE_PATH)):
+        os.remove(SAVE_FILE_PATH)
+    save(save_content,SAVE_FILE_PATH)
+
+def load_session(file=SAVE_FILE_PATH):
+    global selected_wire_color
+    global current_wire
+    session = load(file)
+    workspace.clear()
+    for component in session["components"]:
+        new_component = Component(workspace,component.name,component.x-workspace.x,component.y-workspace.y,component.w,component.h,component.color,component.shape)
+        new_component.id = component.id
+        workspace.add_component(new_component)
+    for wire in session["wires"]:
+        new_wire = None
+        for component in workspace.components:
+            if (component.id == wire[-2]):
+                new_wire = Wire(wire[0].color,component,wire[0].initial_offset_x,wire[0].initial_offset_y)
+                for c in workspace.components:
+                    if (c.id == wire[-1] and new_wire != None):
+                        new_wire.set_final_component(c,wire[0].final_offset_x,wire[0].final_offset_y)
+        new_wire.wire_from_label = tkinter.Label(root,text="from",bg="white",fg="black")
+        new_wire.wire_to_label = tkinter.Label(root,text="to",bg="white",fg="black")
+        selected_wire_color = wire[2]
+        new_wire.set_pin_names(wire[-3][0],wire[-3][1])
+        new_wire.draw()
+        current_wire = [None,None]
+
+def question_exit():
+    exit = messagebox.askokcancel("","Exit?\n\nYour current session will be saved.")
+    if (exit):
+        save_session(workspace)
+        root.destroy()
 
 class Workspace(): # where all the components, wires], etc. exist
     x = 0
@@ -406,6 +477,9 @@ class Wire(): # wire connecting two components
         self.component_1_pin = component_1_pin
         self.component_2_pin = component_2_pin
 
+    def get_pin_names(self): # return (component_1_pin,component_2_pin)
+        return (self.component_1_pin,self.component_2_pin)
+
     def set_final_component(self,component,offset_x,offset_y): # set the second component
         self.final_component = component
         self.final_offset_x = offset_x
@@ -443,8 +517,11 @@ class Wire(): # wire connecting two components
                 self.wire_from_label.lift()
                 self.wire_to_label.lift()
         else:
-            self.wire_from_label.place_forget()
-            self.wire_to_label.place_forget()
+            try:
+                self.wire_from_label.place_forget()
+                self.wire_to_label.place_forget()
+            except AttributeError:
+                pass
         root.after(WIRE_UPDATE_SPEED,self.labels)
 
     def draw(self): # draw self and append to 'wires'
@@ -470,8 +547,10 @@ class Component(): # an element in the workspace
     drawing = None
     shape = "rect"
     over_delete = False
+    id = 0
 
     def __init__(self,workspace,name,x,y,w,h,color="green",shape="rect"):
+        global new_component_id
         self.name = name
         self.x = workspace.x+x
         self.y = workspace.y+y
@@ -479,9 +558,11 @@ class Component(): # an element in the workspace
         self.h = h
         self.color = color
         self.shape = shape 
+        self.id = new_component_id
+        new_component_id += 1
         self.movement()
 
-    def remove(self): # remove component and all connected wires
+    def delete(self): # remove component and all connected wires
         wires_to_delete = get_wires_to_component(self)
         for wire in wires_to_delete:
             wire.delete()
@@ -541,7 +622,7 @@ class Component(): # an element in the workspace
                 if (not self.over_delete):
                     canvas.itemconfig(self.drawing,outline="black")
                 else:
-                    self.remove()
+                    self.delete()
             elif (not self.moving and state == "idle"):
                 canvas.tag_raise(self.drawing)
                 workspace.components.remove(self)
@@ -603,6 +684,7 @@ root.geometry("1200x700")
 root.configure(bg="lime")
 root.title("CircuitCreator v%s"%(VERSION))
 root.bind("<Button-1>",handle_global_click)
+root.protocol("WM_DELETE_WINDOW", question_exit)
 
 # Canvas Setup
 canvas = tkinter.Canvas(root,width=1200,height=700,bg=ROOT_BACKGROUND_COLOR,highlightthickness=0)
@@ -695,15 +777,19 @@ new_component_button.place(anchor="n",relx=0.5,rely=0.05)
 new_component_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
 # Add Wires Setup
-panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.92)
-wire_buttons_frame = tkinter.Frame(panel,bg=MENU_BACKGROUND_COLOR,width=300,height=50)
-wire_buttons_frame.place(anchor="s",relx=0.5,rely=1)
+panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.82)
+wire_buttons_frame = tkinter.Frame(panel,bg=MENU_BACKGROUND_COLOR,width=250,height=50)
+wire_buttons_frame.place(anchor="s",relx=0.5,rely=0.9)
 for color in WIRE_COLORS:
     wire_buttons.append(tkButton.Button(wire_buttons_frame,width=30,height=30,text=" ",bg=wire_color(color),command=lambda x=color:select_wire(x)))
 for i in range(len(wire_buttons)):
     wire_buttons[i].place(anchor="center",relx=0.1+i/5,rely=0.5)
 update_wires()
 
+# Exit Button Setup
+exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=question_exit)
+exit_button.place(anchor="s",relx=0.5,rely=0.99)
+exit_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
 # Mouse Setup
 root.bind("<Motion>",motion)
@@ -730,6 +816,10 @@ if ("--debug" in sys.argv):
     if (not "--highperformance" in sys.argv and not "--standardperformance" in sys.argv):
         PERFORMANCE_MODE = "LOW"
     root.title("CircuitCreator v%s (DEBUG MODE)"%(VERSION))
+
+if (os.path.exists(SAVE_FILE_PATH)):
+    if (messagebox.askyesno("","Welcome Back\n\nRestore previous session?")):
+        load_session()
 
 # Run application
 root.mainloop()

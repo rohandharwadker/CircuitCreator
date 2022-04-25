@@ -9,3 +9,8 @@ A simple way to organize components and plan wiring patterns in a project before
 
 ### Version 1.0.2 (April 2022)
 - Minor styling changes
+
+### Version 2.0.0 (April 2022)
+- Save/Load workspace
+- Minor styline changes
+- Bug fixes
