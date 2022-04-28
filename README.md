@@ -15,11 +15,11 @@ A simple way to organize components and plan wiring patterns in a project before
 - Minor styline changes
 - Bug fixes
 
-# Version 2.0.1 (April 2022)
+### Version 2.0.1 (April 2022)
 - Add menu bar
 - Bug fixes
 
-# Version 2.1.0 (April 2022)
+### Version 2.1.0 (April 2022)
 - Save/Load Workspaces
 - New Key bindings
     - Command+S - Save Workspace
