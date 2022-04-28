@@ -1,5 +1,5 @@
 # Info
-VERSION = "2.0.1"
+VERSION = "2.1.0"
 DEVELOPER = "Rohan Dharwadker"
 PRODUCT = "CircuitCreator"
 
@@ -51,5 +51,5 @@ MIN_COMPONENT_SIZE = 75
 COMPONENT_COLORS = ["Red","Orange","Yellow","Green","Blue","Purple","Gray","Black"]
 COMPONENT_SHAPES = ["Rect","Circle","Hex"]
 
-# File Handling
-SAVE_FILE_PATH = "save/session.pickle"
+# Save
+SAVE_DATA_PATH = "save/data.pickle"

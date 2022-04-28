@@ -5,6 +5,7 @@ import tkButton
 import sys
 from config import *
 from tkinter import messagebox
+from tkinter import filedialog
 
 
 
@@ -23,6 +24,7 @@ current_wire = [None,None] # the current wire pairing
 selected_wire_color = "" # the currently selected wire color
 wire_preview = None # the wire preview drawing
 new_component_id = 0 # the next component id
+current_save_path = ""
 
 
 
@@ -297,28 +299,42 @@ def load(file,empty_return_value=None):
     else:
         return empty_return_value
 
-def save_session(workspace):
-    _wires = []
-    for wire in wires:
-        w = []
-        for item in wire:
-            w.append(item)
-        _wires.append(w)
-    for wire in _wires:
-        wire[0].drawing = None
-        wire[0].wire_from_label = None
-        wire[0].wire_to_label = None
-        wire.append(wire[0].get_pin_names())
-        wire.append(wire[0].initial_component.id)
-        wire.append(wire[0].final_component.id)
-    _components = workspace.components
-    save_content = {"components":_components,"wires":_wires}
-    if (os.path.exists(SAVE_FILE_PATH)):
-        os.remove(SAVE_FILE_PATH)
-    save(save_content,SAVE_FILE_PATH)
-    show_message("Workspace Saved.")
+def save_session(workspace,event=""):
+    global current_save_path
+    if (current_save_path == ""):
+        current_save_path = filedialog.asksaveasfilename(filetypes=[("Workspace Files",".pickle")])
+    if (current_save_path != ""):
+        _wires = []
+        for wire in wires:
+            w = []
+            for item in wire:
+                w.append(item)
+            _wires.append(w)
+        for wire in _wires:
+            wire[0].drawing = None
+            wire[0].wire_from_label = None
+            wire[0].wire_to_label = None
+            wire.append(wire[0].get_pin_names())
+            wire.append(wire[0].initial_component.id)
+            wire.append(wire[0].final_component.id)
+        _components = workspace.components
+        save_content = {"components":_components,"wires":_wires}
+        if (os.path.exists(current_save_path)):
+            os.remove(current_save_path)
+        save(save_content,current_save_path)
+        show_message("Workspace Saved to %s"%current_save_path)
+    else:
+        return "no file"
 
-def load_session(file=SAVE_FILE_PATH):
+def save_session_as(workspace):
+    global current_save_path
+    prev_save_path = current_save_path
+    current_save_path = "" 
+    if (save_session(workspace) == "no file"):
+        current_save_path = prev_save_path
+
+def load_session(file):
+    global current_save_path
     global selected_wire_color
     global current_wire
     session = load(file)
@@ -341,12 +357,20 @@ def load_session(file=SAVE_FILE_PATH):
         new_wire.set_pin_names(wire[-3][0],wire[-3][1])
         new_wire.draw()
         current_wire = [None,None]
+    current_save_path = file
     show_message("Successfully Loaded Workspace.")
 
+def select_load_session():
+    load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")]))
+
 def question_exit():
-    exit = messagebox.askokcancel("","Exit?\n\nYour current session will be saved.")
-    if (exit):
+    save = messagebox.askyesnocancel("","You are about to exit %s.\n\nSave workspace?"%PRODUCT)
+    if (save):
         save_session(workspace)
+        exit()
+    elif (save == None):
+        pass
+    else:
         exit()
 
 def save_and_exit():
@@ -354,7 +378,32 @@ def save_and_exit():
     exit()
 
 def exit():
+    if (os.path.exists(SAVE_DATA_PATH)):
+        os.remove(SAVE_DATA_PATH)
+    if (current_save_path != ""):
+        save({
+            "current_save_path":current_save_path
+            },SAVE_DATA_PATH)
     root.destroy()
+
+def update_title():
+    current_save_file = current_save_path.split("/")[-1].replace(".pickle","")
+    new_title = "CircuitCreator v%s"%VERSION
+    if ("--debug" in sys.argv):
+        new_title += " (DEBUG MODE)"
+    if (current_save_file == ""):
+        current_save_file = "Untitled"
+    new_title = current_save_file + " - " + new_title
+    root.title(new_title)
+    root.after(UPDATE_SPEED,update_title)
+
+def new_session():
+    global current_save_path
+    if (messagebox.askyesno("","Save?\n\nDo you want to save changes to your current workspace before starting a new workspace?")):
+        save_session(workspace)
+    workspace.clear()
+    current_save_path = ""
+    show_message("Started new workspace.")
 
 class Workspace(): # where all the components, wires], etc. exist
     x = 0
@@ -396,8 +445,11 @@ class Workspace(): # where all the components, wires], etc. exist
         for obj in self.components:
             canvas.delete(obj.get_drawing())
         self.components = []
+        wires_to_delete = []
         for wire in wires:
-            canvas.delete(wire[0])
+            wires_to_delete.append(wire[0])
+        for wire in wires_to_delete:
+            wire.delete()
         wires = []
 
     def remove_object(self,obj): # remove an object from the workspace
@@ -468,14 +520,18 @@ class Wire(): # wire connecting two components
         self.labels()
 
     def delete(self): # delete the wire wrom the workspace
+        global wires
         try:
             for wire in wires:
-                if (wire[0] == self):
-                    wires.remove(wire)
-                    canvas.delete(wire[1])
-                    self.hover_off()
-                    show_message("deleted wire from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
-                    del self
+                try:
+                    if (wire[0] == self):
+                        wires.remove(wire)
+                        canvas.delete(wire[1])
+                        self.hover_off()
+                        show_message("deleted wire from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
+                        del self
+                except UnboundLocalError:
+                    pass
         except IndexError:
             pass
 
@@ -691,16 +747,32 @@ root.configure(bg="lime")
 root.title("CircuitCreator v%s"%(VERSION))
 root.bind("<Button-1>",handle_global_click)
 root.protocol("WM_DELETE_WINDOW", question_exit)
+update_title()
+
+# Key bindings
+root.bind("<Command-s>",lambda x: save_session(workspace))
+root.bind("<Command-Option-S>",lambda x: save_session(workspace))
+root.bind("<Command-o>",lambda x:select_load_session())
+root.bind("<Command-n>",lambda x:new_session())
+root.bind("<Command-w>",lambda x:save_and_exit())
+root.bind("<Command-Option-w>",lambda x:question_exit())
+root.bind("<Command-c>",lambda x:open_component_menu())
 
 # Menu Bar Setup
 menu = tkinter.Menu(root)
-file_menu = tkinter.Menu(menu,tearoff=0)
-file_menu.add_command(label="Save", command=lambda: save_session(workspace))
-file_menu.add_separator()
-file_menu.add_command(label="Exit Without Saving", command=exit)
-file_menu.add_command(label="Save and Exit",command=save_and_exit)
+workspace_menu = tkinter.Menu(menu,tearoff=0)
+workspace_menu.add_command(label="New Component...",accelerator="Command-C",command=open_component_menu)
+workspace_menu.add_separator()
+workspace_menu.add_command(label="New Workspace...",accelerator="Command-N",command=new_session)
+workspace_menu.add_command(label="Load Workspace...", accelerator="Command-O", command=select_load_session)
+workspace_menu.add_separator()
+workspace_menu.add_command(label="Save Workspace", accelerator="Command-S", command=lambda: save_session(workspace))
+workspace_menu.add_command(label="Save Workspace As...", accelerator="Command-Option-S", command=lambda: save_session_as(workspace))
+workspace_menu.add_separator()
+workspace_menu.add_command(label="Exit", accelerator="Command-Option-W",command=question_exit)
+workspace_menu.add_command(label="Save and Exit",accelerator="Command-W",command=save_and_exit)
 
-menu.add_cascade(label="File",menu=file_menu)
+menu.add_cascade(label="Workspace",menu=workspace_menu)
 root.configure(menu=menu)
 
 # Canvas Setup
@@ -758,8 +830,6 @@ update_component_preview()
 # Don't place this frame yet
 add_component_frame.place_forget()
 
-
-
 # Add wire menu setup
 add_wire_frame = tkinter.Frame(root,width=400,height=200,bg=MENU_BACKGROUND_COLOR,highlightthickness=3,highlightbackground="black")
 add_wire_frame.place(anchor="center",relx=0.5,rely=0.4)
@@ -779,9 +849,6 @@ add_wire_button.place(anchor="s",relx=0.5,rely=0.92)
 add_wire_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 # Don't place this frame yet
 add_wire_frame.place_forget()
-
-
-
 
 # Panel Setup
 panel = tkinter.Frame(root,width=300,height=700,bg=ROOT_BACKGROUND_COLOR)
@@ -804,7 +871,7 @@ for i in range(len(wire_buttons)):
 update_wires()
 
 # Exit Button Setup
-exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=question_exit)
+exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=save_and_exit)
 exit_button.place(anchor="s",relx=0.5,rely=0.99)
 exit_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
@@ -816,27 +883,23 @@ hover_label = tkinter.Label(root,text="mouse",bg="white",fg="black")
 workspace = Workspace(300,0,900,700)
 workspace.draw()
 workspace.update()
-workspace.add_component(Component(workspace,"component",100,100,100,100))
-workspace.add_component(Component(workspace,"component",100,300,100,100))
 
 # Sys Arguments
 if ("--highperformance" in sys.argv):
     PERFORMANCE_MODE = "HIGH"
-    root.title("CircuitCreator v%s (High Performance Mode)"%(VERSION))
 elif ("--lowperformance" in  sys.argv):
     PERFORMANCE_MODE = "LOW"
-    root.title("CircuitCreator v%s (Low Performance Mode)"%(VERSION))
 elif ("--standardperformance" in  sys.argv):
     PERFORMANCE_MODE = "STANDARD"
 if ("--debug" in sys.argv):
     draw_debug()
     if (not "--highperformance" in sys.argv and not "--standardperformance" in sys.argv):
         PERFORMANCE_MODE = "LOW"
-    root.title("CircuitCreator v%s (DEBUG MODE)"%(VERSION))
 
-if (os.path.exists(SAVE_FILE_PATH)):
-    if (messagebox.askyesno("","Welcome Back\n\nRestore previous session?")):
-        load_session()
+# Load previous workspace
+existing_data = load(SAVE_DATA_PATH)
+if (existing_data["current_save_path"] != "" and os.path.exists(existing_data["current_save_path"])):
+    load_session(existing_data["current_save_path"])
 
 # Run application
 root.mainloop()

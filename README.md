@@ -18,3 +18,15 @@ A simple way to organize components and plan wiring patterns in a project before
 # Version 2.0.1 (April 2022)
 - Add menu bar
 - Bug fixes
+
+# Version 2.1.0 (April 2022)
+- Save/Load Workspaces
+- New Key bindings
+    - Command+S - Save Workspace
+    - Command+Option+S - Save Workspace As
+    - Command+O - Load Workspace
+    - Command+N - New Workspace
+    - Command+W - Save & Exit
+    - Command+Option+W - Exit Without Saving
+    - Command+C - New Component
+- Bug Fixes
