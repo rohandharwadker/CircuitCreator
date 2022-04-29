@@ -2,22 +2,12 @@
 A simple way to organize components and plan wiring patterns in a project before actually assembling
 
 ## Release Notes
-### Version 1.0.1 (April 2022)
-- Fix component name appearing below pin names
-- Fix formatting inconsistency in alerts
-- Fix console outputting debugging content
 
-### Version 1.0.2 (April 2022)
-- Minor styling changes
-
-### Version 2.0.0 (April 2022)
-- Save/Load workspace
-- Minor styline changes
-- Bug fixes
-
-### Version 2.0.1 (April 2022)
-- Add menu bar
-- Bug fixes
+### Version 2.2.0 (April 2022)
+- Add 'Configure Menu'
+- Save user preferences on any close, regardless of save
+- Add Logo
+- Bug Fixes
 
 ### Version 2.1.0 (April 2022)
 - Save/Load Workspaces
@@ -31,8 +21,19 @@ A simple way to organize components and plan wiring patterns in a project before
     - Command+C - New Component
 - Bug Fixes
 
-### Version 2.2.0 (April 2022)
-- Add 'Configure Menu'
-- Save user preferences on any close, regardless of save
-- Add Logo
-- Bug Fixes
+### Version 2.0.1 (April 2022)
+- Add menu bar
+- Bug fixes
+
+### Version 2.0.0 (April 2022)
+- Save/Load workspace
+- Minor styline changes
+- Bug fixes
+
+### Version 1.0.2 (April 2022)
+- Minor styling changes
+
+### Version 1.0.1 (April 2022)
+- Fix component name appearing below pin names
+- Fix formatting inconsistency in alerts
+- Fix console outputting debugging content
