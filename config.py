@@ -1,5 +1,5 @@
 # Info
-VERSION = "2.1.0"
+VERSION = "2.2.0"
 DEVELOPER = "Rohan Dharwadker"
 PRODUCT = "CircuitCreator"
 
@@ -52,4 +52,5 @@ COMPONENT_COLORS = ["Red","Orange","Yellow","Green","Blue","Purple","Gray","Blac
 COMPONENT_SHAPES = ["Rect","Circle","Hex"]
 
 # Save
-SAVE_DATA_PATH = "save/data.pickle"
+SAVE_DATA_PATH = "save/preferences/data.pickle"
+SETTINGS_SAVE_PATH = "save/preferences/settings.pickle"

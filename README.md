@@ -30,3 +30,9 @@ A simple way to organize components and plan wiring patterns in a project before
     - Command+Option+W - Exit Without Saving
     - Command+C - New Component
 - Bug Fixes
+
+### Version 2.2.0 (April 2022)
+- Add 'Configure Menu'
+- Save user preferences on any close, regardless of save
+- Add Logo
+- Bug Fixes

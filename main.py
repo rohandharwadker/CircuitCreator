@@ -7,8 +7,6 @@ from config import *
 from tkinter import messagebox
 from tkinter import filedialog
 
-
-
 # Global Variables
 state = "idle" # the state of the program
 hover_text = "" # the text next to the mouse
@@ -25,12 +23,11 @@ selected_wire_color = "" # the currently selected wire color
 wire_preview = None # the wire preview drawing
 new_component_id = 0 # the next component id
 current_save_path = ""
-
-
+debug_mode = False
+previous_message_position = MESSAGE_POSITION
+root_updated = 0
 
 root = tkinter.Tk()
-
-
 
 # Global Methods
 def point_between(x,p1,p2): # check if x is between p1 and p2
@@ -84,7 +81,6 @@ def component_meets_conditions(name,w,h,color,shape,show_errors=True): # Return 
     return conditions_met
 
 def add_component(workspace,name,w,h,color,shape,show_errors=True): # create and add a component to a workspace
-
     # Check h and w to make sure they are valid integers
     try:
         h = int(h)
@@ -99,13 +95,10 @@ def add_component(workspace,name,w,h,color,shape,show_errors=True): # create and
         if show_errors:
             show_message("invalid width",accent="red")
         return -1
-
     # Meets conditions
     conditions_met = component_meets_conditions(name,w,h,color,shape,show_errors=show_errors)
-
     # Set Colors
     color = canvas_color(color)
-
     # Add object
     if (conditions_met):
         obj = Component(workspace,name,300,300,w,h,color=color.lower(),shape=shape.lower())
@@ -137,15 +130,19 @@ def draw_debug(): # handles drawing of all debug labels
     global debug_labels
     for label in debug_labels:
         canvas.delete(label)
-    for component in workspace.components:
-        # show x and y of all components
-        debug_labels.append(canvas.create_text(component.x,component.y,text="(%s,%s)"%(component.x,component.y),anchor="se"))
-    # show app info
-    debug_labels.append(canvas.create_text(1190,10,text="%s (v%s)\nBy %s\nDEBUG ENABLED"%(PRODUCT,VERSION,DEVELOPER),anchor="ne",fill="white",justify="right"))
-    # show performance mode
-    debug_labels.append(canvas.create_text(1190,690,text="%s PERFORMANCE MODE"%PERFORMANCE_MODE,anchor="se",fill="white"))
-    # show state and current wire combo
-    debug_labels.append(canvas.create_text(310,10,text="STATE: %s\nCurrent wire: %s"%(state.upper(),current_wire),anchor="nw",fill="white"))
+    debug_labels = []
+    if (debug_mode):
+        for label in debug_labels:
+            canvas.delete(label)
+        for component in workspace.components:
+            # show x and y of all components
+            debug_labels.append(canvas.create_text(component.x,component.y,text="(%s,%s)"%(component.x,component.y),anchor="se"))
+        # show app info
+        debug_labels.append(canvas.create_text(1190,10,text="%s (v%s)\nBy %s\nDEBUG ENABLED"%(PRODUCT,VERSION,DEVELOPER),anchor="ne",fill="white",justify="right"))
+        # show performance mode
+        debug_labels.append(canvas.create_text(1190,690,text="%s PERFORMANCE MODE"%PERFORMANCE_MODE,anchor="se",fill="white"))
+        # show state and current wire combo
+        debug_labels.append(canvas.create_text(310,10,text="STATE: %s\nCurrent wire: %s"%(state.upper(),current_wire),anchor="nw",fill="white"))
     root.after(DEBUG_SPEED,draw_debug)
 
 def open_component_menu(): # open the new component menu
@@ -256,7 +253,7 @@ def handle_global_click(event): # handle global click events and pass to objects
     except AttributeError as e:
         pass
 
-def open_wire_add_menu(current_wire):
+def open_wire_add_menu(current_wire): # Open the pin labels wire menu
     global state
     state = "menu"
     wire = current_wire[0][0]
@@ -267,7 +264,7 @@ def open_wire_add_menu(current_wire):
     add_wire_to_label.configure(text="%s Pin Name"%(component2.name))
     add_wire_button.command = lambda:close_wire_add_menu(wire)
 
-def close_wire_add_menu(wire):
+def close_wire_add_menu(wire): # Close the pin labels wire menu and set the pin names
     name1 = add_wire_pin1_entry.get()
     name2 = add_wire_pin2_entry.get()
     if (len(name1) > MAX_PIN_CHARACTERS or len(name2) > MAX_PIN_CHARACTERS):
@@ -287,21 +284,21 @@ def get_wires_to_component(component): # get all wires connected to a given comp
             connected_wires.append(wire[0])
     return connected_wires
 
-def save(item,file):
+def save(item,file): # Save an item using pickle
     with open(file,"wb") as f:
         pickle.dump(item,f)
     f.close()
 
-def load(file,empty_return_value=None):
+def load(file,empty_return_value=None): # load a .pickle file
     if (os.path.exists(file)):
         with open(file,"rb") as f:
             return pickle.load(f)
     else:
         return empty_return_value
 
-def save_session(workspace,event=""):
+def save_session(workspace,event=""): # Save the current workspace to a .pickle file
     global current_save_path
-    if (current_save_path == ""):
+    if (current_save_path == ""): # Get the save path
         current_save_path = filedialog.asksaveasfilename(filetypes=[("Workspace Files",".pickle")])
     if (current_save_path != ""):
         _wires = []
@@ -326,14 +323,14 @@ def save_session(workspace,event=""):
     else:
         return "no file"
 
-def save_session_as(workspace):
+def save_session_as(workspace): # Save session as a new file
     global current_save_path
     prev_save_path = current_save_path
     current_save_path = "" 
     if (save_session(workspace) == "no file"):
         current_save_path = prev_save_path
 
-def load_session(file):
+def load_session(file): # Load a .pickle workspace
     global current_save_path
     global selected_wire_color
     global current_wire
@@ -360,10 +357,10 @@ def load_session(file):
     current_save_path = file
     show_message("Successfully Loaded Workspace.")
 
-def select_load_session():
+def select_load_session(): # Load session through file explorer
     load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")]))
 
-def question_exit():
+def question_exit(): # Ask to save or cancel before exiting
     save = messagebox.askyesnocancel("","You are about to exit %s.\n\nSave workspace?"%PRODUCT)
     if (save):
         save_session(workspace)
@@ -373,23 +370,22 @@ def question_exit():
     else:
         exit()
 
-def save_and_exit():
+def save_and_exit(): # Save and exit root
     save_session(workspace)
     exit()
 
-def exit():
+def exit(): # Exit the root
     if (os.path.exists(SAVE_DATA_PATH)):
         os.remove(SAVE_DATA_PATH)
     if (current_save_path != ""):
-        save({
-            "current_save_path":current_save_path
-            },SAVE_DATA_PATH)
+        save({"current_save_path":current_save_path},SAVE_DATA_PATH)
+    save_settings()
     root.destroy()
 
-def update_title():
+def update_title(): # Update the root title
     current_save_file = current_save_path.split("/")[-1].replace(".pickle","")
     new_title = "CircuitCreator v%s"%VERSION
-    if ("--debug" in sys.argv):
+    if (debug_mode):
         new_title += " (DEBUG MODE)"
     if (current_save_file == ""):
         current_save_file = "Untitled"
@@ -397,13 +393,66 @@ def update_title():
     root.title(new_title)
     root.after(UPDATE_SPEED,update_title)
 
-def new_session():
+def new_session(): # Create a new workspace
     global current_save_path
     if (messagebox.askyesno("","Save?\n\nDo you want to save changes to your current workspace before starting a new workspace?")):
         save_session(workspace)
     workspace.clear()
     current_save_path = ""
     show_message("Started new workspace.")
+
+def update_root(): # update elements of the root
+    global debug_mode
+    global PERFORMANCE_MODE
+    global MESSAGE_POSITION
+    global previous_message_position
+    global root_updated
+    # Debug Mode
+    if (debug_stringvar.get() == "True"):
+        debug_mode = True
+    else:
+        debug_mode = False
+    # Update title
+    current_save_file = current_save_path.split("/")[-1].replace(".pickle","")
+    new_title = "CircuitCreator v%s"%VERSION
+    if (debug_mode):
+        new_title += " (DEBUG MODE)"
+    if (current_save_file == ""):
+        current_save_file = "Untitled"
+    new_title = current_save_file + " - " + new_title
+    root.title(new_title)
+    # Update Performance Mode
+    PERFORMANCE_MODE = performance_stringvar.get()
+    # Update Message Position
+    MESSAGE_POSITION = message_position_stringvar.get()
+    if (MESSAGE_POSITION != previous_message_position and not root_updated == 0):
+        show_message("Messages will appear here.")
+    previous_message_position = MESSAGE_POSITION
+    root_updated += 1
+    root.after(UPDATE_SPEED,update_root)
+
+def save_settings(): # save settings adjusted by the user
+    settings = {
+        "performance":PERFORMANCE_MODE,
+        "message-position":MESSAGE_POSITION,
+        "debug-mode":debug_mode
+    }
+    if (os.path.exists(SETTINGS_SAVE_PATH)):
+        os.remove(SETTINGS_SAVE_PATH)
+    save(settings,SETTINGS_SAVE_PATH)
+
+def load_settings(): # load settings from previous session
+    global MESSAGE_POSITION
+    global PERFORMANCE_MODE
+    global debug_mode
+    settings = load(SETTINGS_SAVE_PATH,empty_return_value=None)
+    if (settings != None):
+        PERFORMANCE_MODE = settings["performance"]
+        performance_stringvar.set(PERFORMANCE_MODE)
+        MESSAGE_POSITION = settings["message-position"]
+        message_position_stringvar.set(MESSAGE_POSITION)
+        debug_mode = settings["debug-mode"]
+        debug_stringvar.set(str(debug_mode))
 
 class Workspace(): # where all the components, wires], etc. exist
     x = 0
@@ -744,10 +793,10 @@ class Component(): # an element in the workspace
 # Root Setup
 root.geometry("1200x700")
 root.configure(bg="lime")
+root.iconphoto(False, tkinter.PhotoImage(file="logo.png"))
 root.title("CircuitCreator v%s"%(VERSION))
 root.bind("<Button-1>",handle_global_click)
 root.protocol("WM_DELETE_WINDOW", question_exit)
-update_title()
 
 # Key bindings
 root.bind("<Command-s>",lambda x: save_session(workspace))
@@ -760,6 +809,7 @@ root.bind("<Command-c>",lambda x:open_component_menu())
 
 # Menu Bar Setup
 menu = tkinter.Menu(root)
+# Workspace Menu
 workspace_menu = tkinter.Menu(menu,tearoff=0)
 workspace_menu.add_command(label="New Component...",accelerator="Command-C",command=open_component_menu)
 workspace_menu.add_separator()
@@ -771,8 +821,27 @@ workspace_menu.add_command(label="Save Workspace As...", accelerator="Command-Op
 workspace_menu.add_separator()
 workspace_menu.add_command(label="Exit", accelerator="Command-Option-W",command=question_exit)
 workspace_menu.add_command(label="Save and Exit",accelerator="Command-W",command=save_and_exit)
-
+# Configure Menu
+configure_menu = tkinter.Menu(menu,tearoff=0)
+performance_stringvar = tkinter.StringVar()
+performance_stringvar.set(PERFORMANCE_MODE)
+performance_menu = tkinter.Menu(configure_menu)
+performance_menu.add_radiobutton(label="High",variable=performance_stringvar,value="HIGH")
+performance_menu.add_radiobutton(label="Standard",variable=performance_stringvar,value="STANDARD")
+performance_menu.add_radiobutton(label="Low",variable=performance_stringvar,value="LOW")
+configure_menu.add_cascade(menu=performance_menu,label="Performance")
+message_position_stringvar = tkinter.StringVar()
+message_position_stringvar.set(MESSAGE_POSITION)
+message_position_menu = tkinter.Menu(configure_menu)
+message_position_menu.add_radiobutton(label="Display at Top",variable=message_position_stringvar,value="top")
+message_position_menu.add_radiobutton(label="Display at Bottom",variable=message_position_stringvar,value="bottom")
+configure_menu.add_cascade(menu=message_position_menu,label="Alerts")
+configure_menu.add_separator()
+debug_stringvar = tkinter.StringVar()
+configure_menu.add_checkbutton(label="Enable Statistics",variable=debug_stringvar,onvalue="True",offvalue="False")
+# Add Menus to menubar
 menu.add_cascade(label="Workspace",menu=workspace_menu)
+menu.add_cascade(label="Configure",menu=configure_menu)
 root.configure(menu=menu)
 
 # Canvas Setup
@@ -892,14 +961,19 @@ elif ("--lowperformance" in  sys.argv):
 elif ("--standardperformance" in  sys.argv):
     PERFORMANCE_MODE = "STANDARD"
 if ("--debug" in sys.argv):
-    draw_debug()
+    debug_mode = True
     if (not "--highperformance" in sys.argv and not "--standardperformance" in sys.argv):
         PERFORMANCE_MODE = "LOW"
 
 # Load previous workspace
-existing_data = load(SAVE_DATA_PATH)
-if (existing_data["current_save_path"] != "" and os.path.exists(existing_data["current_save_path"])):
+load_settings()
+existing_data = load(SAVE_DATA_PATH,empty_return_value=None)
+if (existing_data != None and os.path.exists(existing_data["current_save_path"] and existing_data["current_save_path"] != "")):
     load_session(existing_data["current_save_path"])
+
+# Start infinite methods
+draw_debug()
+update_root()
 
 # Run application
 root.mainloop()
