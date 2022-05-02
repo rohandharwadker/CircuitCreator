@@ -1,9 +1,9 @@
 # Circuit Creator
 A simple way to organize components and plan wiring patterns in a project before actually assembling
 
-<p style="text-align:center;margin: 0 auto">
+<div style="text-align:center;margin: 0 auto">
   <img width="300" src="logo.png">
-</p>
+</div>
 
 ## Release Notes
 
