@@ -1,6 +1,8 @@
 # Circuit Creator
 A simple way to organize components and plan wiring patterns in a project before actually assembling
 
+![CircuitCreator Logo](https://github.com/rohandharwadker/CircuitCreator/blob/master/logo.png?raw=true)
+
 ## Release Notes
 
 ### Version 2.3.0 (May 2022)
