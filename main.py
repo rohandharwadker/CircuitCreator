@@ -59,27 +59,27 @@ def component_meets_conditions(name,w,h,color,shape,show_errors=True): # Return 
     if (color == "Select"): # color is selected
         conditions_met = False
         if (show_errors):
-            show_message("select component color",accent="red")
+            show_message("Select component color",accent="red")
     elif (shape == "Select"): # shape is selected
         conditions_met = False
         if (show_errors):
-            show_message("select component shape",accent="red")
+            show_message("Select component shape",accent="red")
     elif (name == ""): # has a name
         conditions_met = False
         if (show_errors):
-            show_message("set component name",accent="red")
+            show_message("Set component name",accent="red")
     elif (len(name) > MAX_COMPONENT_CHARACTERS): # name isn't too long
         conditions_met = False
         if (show_errors):
-            show_message("component name must be %s characters or less"%MAX_COMPONENT_CHARACTERS,accent="red")
+            show_message("Component name must be %s characters or less"%MAX_COMPONENT_CHARACTERS,accent="red")
     elif (w > MAX_COMPONENT_SIZE or h > MAX_COMPONENT_SIZE): # isn't too big
         conditions_met = False
         if (show_errors):
-            show_message("component must be smaller than 400x400",accent="red")
+            show_message("Component must be smaller than 400x400",accent="red")
     elif (w < MIN_COMPONENT_SIZE or h < MIN_COMPONENT_SIZE): # isn't too small
         conditions_met = False
         if (show_errors):
-            show_message("component must be larger than 75x75",accent="red")
+            show_message("Component must be larger than 75x75",accent="red")
     return conditions_met
 
 def add_component(workspace,name,w,h,color,shape,show_errors=True): # create and add a component to a workspace
@@ -88,14 +88,14 @@ def add_component(workspace,name,w,h,color,shape,show_errors=True): # create and
         h = int(h)
     except ValueError:
         if show_errors:
-            show_message("invalid height",accent="red")
+            show_message("Invalid height",accent="red")
         return -1
     try:
         if show_errors:
             w = int(w)
     except ValueError:
         if show_errors:
-            show_message("invalid width",accent="red")
+            show_message("Invalid width",accent="red")
         return -1
     # Meets conditions
     conditions_met = component_meets_conditions(name,w,h,color,shape,show_errors=show_errors)
@@ -150,6 +150,7 @@ def draw_debug(): # handles drawing of all debug labels
 def open_component_menu(): # open the new component menu
     global add_component_menu_open
     global state
+    preview_canvas.delete("all")
     if (not add_component_menu_open and state == "idle"):
         add_component_menu_open = True
         state = "menu"
@@ -270,7 +271,7 @@ def close_wire_add_menu(wire): # Close the pin labels wire menu and set the pin 
     name1 = add_wire_pin1_entry.get()
     name2 = add_wire_pin2_entry.get()
     if (len(name1) > MAX_PIN_CHARACTERS or len(name2) > MAX_PIN_CHARACTERS):
-        show_message("pin names must be 5 characters or less",accent="red")
+        show_message("Pin names must be 5 characters or less",accent="red")
     else:
         global state
         state = "idle"
@@ -336,31 +337,32 @@ def load_session(file): # Load a .pickle workspace
     global current_save_path
     global selected_wire_color
     global current_wire
-    session = load(file)
-    workspace.clear()
-    for component in session["components"]:
-        new_component = Component(workspace,component.name,component.x-workspace.x,component.y-workspace.y,component.w,component.h,component.color,component.shape)
-        new_component.id = component.id
-        workspace.add_component(new_component)
-    for wire in session["wires"]:
-        new_wire = None
-        for component in workspace.components:
-            if (component.id == wire[-2]):
-                new_wire = Wire(wire[0].color,component,wire[0].initial_offset_x,wire[0].initial_offset_y)
-                for c in workspace.components:
-                    if (c.id == wire[-1] and new_wire != None):
-                        new_wire.set_final_component(c,wire[0].final_offset_x,wire[0].final_offset_y)
-        new_wire.wire_from_label = tkinter.Label(root,text="from",bg="white",fg="black")
-        new_wire.wire_to_label = tkinter.Label(root,text="to",bg="white",fg="black")
-        selected_wire_color = wire[2]
-        new_wire.set_pin_names(wire[-3][0],wire[-3][1])
-        new_wire.draw()
-        current_wire = [None,None]
-    current_save_path = file
-    show_message("Successfully Loaded Workspace.")
+    session = load(file,empty_return_value=None)
+    if (session != None):
+        workspace.clear()
+        for component in session["components"]:
+            new_component = Component(workspace,component.name,component.x-workspace.x,component.y-workspace.y,component.w,component.h,component.color,component.shape)
+            new_component.id = component.id
+            workspace.add_component(new_component)
+        for wire in session["wires"]:
+            new_wire = None
+            for component in workspace.components:
+                if (component.id == wire[-2]):
+                    new_wire = Wire(wire[0].color,component,wire[0].initial_offset_x,wire[0].initial_offset_y)
+                    for c in workspace.components:
+                        if (c.id == wire[-1] and new_wire != None):
+                            new_wire.set_final_component(c,wire[0].final_offset_x,wire[0].final_offset_y)
+            new_wire.wire_from_label = tkinter.Label(root,text="from",bg="white",fg="black")
+            new_wire.wire_to_label = tkinter.Label(root,text="to",bg="white",fg="black")
+            selected_wire_color = wire[2]
+            new_wire.set_pin_names(wire[-3][0],wire[-3][1])
+            new_wire.draw()
+            current_wire = [None,None]
+        current_save_path = file
+        show_message("Successfully Loaded Workspace.")
 
 def select_load_session(): # Load session through file explorer
-    load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")]),"Load Workspace")
+    load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")],title="Load Workspace"))
 
 def question_exit(): # Ask to save or cancel before exiting
     save = messagebox.askyesnocancel("","You are about to exit %s.\n\nSave workspace?"%PRODUCT)
@@ -397,11 +399,13 @@ def update_title(): # Update the root title
 
 def new_session(): # Create a new workspace
     global current_save_path
-    if (messagebox.askyesno("","Save?\n\nDo you want to save changes to your current workspace before starting a new workspace?")):
+    action = messagebox.askyesnocancel("","Save?\n\nDo you want to save changes to your current workspace before starting a new workspace?")
+    if (action == True):
         save_session(workspace)
-    workspace.clear()
-    current_save_path = ""
-    show_message("Started new workspace.")
+    if (action != None):
+        workspace.clear()
+        current_save_path = ""
+        show_message("Started new workspace.")
 
 def update_root(): # update elements of the root
     global debug_mode
@@ -458,11 +462,14 @@ def load_settings(): # load settings from previous session
 
 def export_workspace(event=""):
     global message
-    watermark.place(anchor="se",relx=1,rely=0.99)
     default_name = current_save_path.split("/")[-1].replace(".pickle","")+"_Diagram"
     export_file = filedialog.asksaveasfilename(filetypes=[("PNG Image",".png")],initialfile=default_name,title="Export Workspace")
-    show_message("Exporting...")
-    root.after(200,lambda:post_export(export_file))
+    if (export_file != ""):
+        watermark.place(anchor="se",relx=1,rely=0.99)
+        show_message("Exporting...")
+        root.after(200,lambda:post_export(export_file))
+    else:
+        show_message("An error occured during export.",accent="red")
 
 def post_export(export_file):
     message.place_forget()
@@ -505,7 +512,7 @@ class Workspace(): # where all the components, wires], etc. exist
 
     def add_component(self,obj): # Add a component to the workspace
         self.components.append(obj)
-        show_message("added component to workspace: %s"%obj.name)
+        show_message("Added component to workspace: %s"%obj.name)
         obj.draw()
         return True
 
@@ -601,7 +608,7 @@ class Wire(): # wire connecting two components
                         wires.remove(wire)
                         canvas.delete(wire[1])
                         self.hover_off()
-                        show_message("deleted wire from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
+                        show_message("Deleted wire from %s (%s) to %s (%s)"%(self.initial_component.name,self.component_1_pin,self.final_component.name,self.component_2_pin))
                         del self
                 except UnboundLocalError:
                     pass
@@ -702,7 +709,7 @@ class Component(): # an element in the workspace
         for wire in wires_to_delete:
             wire.delete()
         canvas.delete(self.drawing)
-        show_message("deleted component: %s"%self.name)
+        show_message("Deleted component: %s"%self.name)
         self.hover_off()
         workspace.remove_object(self)
         del self
@@ -825,12 +832,12 @@ root.protocol("WM_DELETE_WINDOW", question_exit)
 # Key bindings
 root.bind("<Command-s>",lambda x: save_session(workspace))
 root.bind("<Command-Option-S>",lambda x: save_session(workspace))
-root.bind("<Command-o>",select_load_session)
-root.bind("<Command-n>",new_session)
-root.bind("<Command-w>",save_and_exit)
-root.bind("<Command-Option-w>",question_exit)
-root.bind("<Command-c>",open_component_menu)
-root.bind("<Command-e>",export_workspace)
+root.bind("<Command-o>",lambda x: select_load_session())
+root.bind("<Command-n>",lambda x: new_session())
+root.bind("<Command-w>",lambda x: save_and_exit())
+root.bind("<Command-Option-w>",lambda x: question_exit())
+root.bind("<Command-c>",lambda x: open_component_menu())
+root.bind("<Command-e>",lambda x: export_workspace())
 
 # Menu Bar Setup
 menu = tkinter.Menu(root)
@@ -865,7 +872,7 @@ message_position_menu.add_radiobutton(label="Display at Bottom",variable=message
 configure_menu.add_cascade(menu=message_position_menu,label="Alerts")
 configure_menu.add_separator()
 debug_stringvar = tkinter.StringVar()
-configure_menu.add_checkbutton(label="Enable Statistics",variable=debug_stringvar,onvalue="True",offvalue="False")
+configure_menu.add_checkbutton(label="Developer View",variable=debug_stringvar,onvalue="True",offvalue="False")
 # Add Menus to menubar
 menu.add_cascade(label="Workspace",menu=workspace_menu)
 menu.add_cascade(label="Configure",menu=configure_menu)
@@ -952,14 +959,14 @@ panel.place(anchor="nw",relx=0,rely=0)
 
 # New Component button
 panel_label("ADD COMPONENTS").place(anchor="s",relx=0.5,rely=0.04)
-new_component_button = tkButton.Button(panel,text="+ NEW COMPONENT",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=open_component_menu)
+new_component_button = tkButton.Button(panel,text="+ NEW COMPONENT",bg=BUTTON_COLOR,fg="white",width=250,height=40,font="Menlo 17 bold",command=open_component_menu)
 new_component_button.place(anchor="n",relx=0.5,rely=0.05)
 new_component_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
 # Add Wires Setup
-panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.75)
+panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.82)
 wire_buttons_frame = tkinter.Frame(panel,bg=MENU_BACKGROUND_COLOR,width=250,height=50)
-wire_buttons_frame.place(anchor="s",relx=0.5,rely=0.83)
+wire_buttons_frame.place(anchor="s",relx=0.5,rely=0.9)
 for color in WIRE_COLORS:
     wire_buttons.append(tkButton.Button(wire_buttons_frame,width=30,height=30,text=" ",bg=wire_color(color),command=lambda x=color:select_wire(x)))
 for i in range(len(wire_buttons)):
@@ -967,14 +974,9 @@ for i in range(len(wire_buttons)):
 update_wires()
 
 # Export Button Setup
-export_button = tkButton.Button(panel,text="EXPORT WORKSPACE",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=export_workspace)
-export_button.place(anchor="s",relx=0.5,rely=0.92)
+export_button = tkButton.Button(panel,text="EXPORT WORKSPACE",bg=BUTTON_COLOR,fg="white",width=250,height=40,font="Menlo 17 bold",command=export_workspace)
+export_button.place(anchor="s",relx=0.5,rely=0.99)
 export_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
-
-# Exit Button Setup
-exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=250,height=40,font="Menlo 17 bold",command=save_and_exit)
-exit_button.place(anchor="s",relx=0.5,rely=0.99)
-exit_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
 # Watermark Setup
 watermark = tkinter.Label(root,text=" Created with CircuitCreator ",bg="white",fg="black",font="Menlo 12")

@@ -9,6 +9,10 @@ A simple way to organize components and plan wiring patterns in a project before
 ###  
 ## Release Notes
 
+### Version 2.3.1 (May 2022)
+- Replace 'Save & Exit' button with 'Export Workspace' button
+- Bug fixes
+
 ### Version 2.3.0 (May 2022)
 - Export Workspaces to .PNG Files
 - Bug Fixes
