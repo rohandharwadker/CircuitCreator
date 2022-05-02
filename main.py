@@ -3,9 +3,11 @@ import os
 import tkinter
 import tkButton
 import sys
+import time
 from config import *
 from tkinter import messagebox
 from tkinter import filedialog
+from PIL import ImageGrab
 
 # Global Variables
 state = "idle" # the state of the program
@@ -299,7 +301,7 @@ def load(file,empty_return_value=None): # load a .pickle file
 def save_session(workspace,event=""): # Save the current workspace to a .pickle file
     global current_save_path
     if (current_save_path == ""): # Get the save path
-        current_save_path = filedialog.asksaveasfilename(filetypes=[("Workspace Files",".pickle")])
+        current_save_path = filedialog.asksaveasfilename(filetypes=[("Workspace Files",".pickle")],title="Save Workspace")
     if (current_save_path != ""):
         _wires = []
         for wire in wires:
@@ -358,7 +360,7 @@ def load_session(file): # Load a .pickle workspace
     show_message("Successfully Loaded Workspace.")
 
 def select_load_session(): # Load session through file explorer
-    load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")]))
+    load_session(filedialog.askopenfilename(filetypes=[("Workspace Files",".pickle")]),"Load Workspace")
 
 def question_exit(): # Ask to save or cancel before exiting
     save = messagebox.askyesnocancel("","You are about to exit %s.\n\nSave workspace?"%PRODUCT)
@@ -453,6 +455,28 @@ def load_settings(): # load settings from previous session
         message_position_stringvar.set(MESSAGE_POSITION)
         debug_mode = settings["debug-mode"]
         debug_stringvar.set(str(debug_mode))
+
+def export_workspace(event=""):
+    global message
+    watermark.place(anchor="se",relx=1,rely=0.99)
+    default_name = current_save_path.split("/")[-1].replace(".pickle","")+"_Diagram"
+    export_file = filedialog.asksaveasfilename(filetypes=[("PNG Image",".png")],initialfile=default_name,title="Export Workspace")
+    show_message("Exporting...")
+    root.after(200,lambda:post_export(export_file))
+
+def post_export(export_file):
+    message.place_forget()
+    x = root.winfo_rootx()+workspace.x
+    y = root.winfo_rooty()+workspace.y
+    x1 = x + root.winfo_width()-workspace.x
+    y1 = y + root.winfo_height()-workspace.y
+    x = x*2
+    y = y*2
+    x1 = x1*2
+    y1 = y1*2
+    root.after(100,lambda: ImageGrab.grab().crop((x,y,x1,y1)).save(export_file))
+    root.after(200,watermark.place_forget)
+    root.after(200,lambda:show_message("Exported Workspace to '%s'"%export_file))
 
 class Workspace(): # where all the components, wires], etc. exist
     x = 0
@@ -801,23 +825,26 @@ root.protocol("WM_DELETE_WINDOW", question_exit)
 # Key bindings
 root.bind("<Command-s>",lambda x: save_session(workspace))
 root.bind("<Command-Option-S>",lambda x: save_session(workspace))
-root.bind("<Command-o>",lambda x:select_load_session())
-root.bind("<Command-n>",lambda x:new_session())
-root.bind("<Command-w>",lambda x:save_and_exit())
-root.bind("<Command-Option-w>",lambda x:question_exit())
-root.bind("<Command-c>",lambda x:open_component_menu())
+root.bind("<Command-o>",select_load_session)
+root.bind("<Command-n>",new_session)
+root.bind("<Command-w>",save_and_exit)
+root.bind("<Command-Option-w>",question_exit)
+root.bind("<Command-c>",open_component_menu)
+root.bind("<Command-e>",export_workspace)
 
 # Menu Bar Setup
 menu = tkinter.Menu(root)
 # Workspace Menu
 workspace_menu = tkinter.Menu(menu,tearoff=0)
-workspace_menu.add_command(label="New Component...",accelerator="Command-C",command=open_component_menu)
+workspace_menu.add_command(label="New Component",accelerator="Command-C",command=open_component_menu)
 workspace_menu.add_separator()
-workspace_menu.add_command(label="New Workspace...",accelerator="Command-N",command=new_session)
+workspace_menu.add_command(label="New Workspace",accelerator="Command-N",command=new_session)
 workspace_menu.add_command(label="Load Workspace...", accelerator="Command-O", command=select_load_session)
 workspace_menu.add_separator()
 workspace_menu.add_command(label="Save Workspace", accelerator="Command-S", command=lambda: save_session(workspace))
 workspace_menu.add_command(label="Save Workspace As...", accelerator="Command-Option-S", command=lambda: save_session_as(workspace))
+workspace_menu.add_separator()
+workspace_menu.add_command(label="Export Workspace...",accelerator="Command-E",command=export_workspace)
 workspace_menu.add_separator()
 workspace_menu.add_command(label="Exit", accelerator="Command-Option-W",command=question_exit)
 workspace_menu.add_command(label="Save and Exit",accelerator="Command-W",command=save_and_exit)
@@ -930,19 +957,27 @@ new_component_button.place(anchor="n",relx=0.5,rely=0.05)
 new_component_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
 
 # Add Wires Setup
-panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.82)
+panel_label("ADD WIRE").place(anchor="s",relx=0.5,rely=0.75)
 wire_buttons_frame = tkinter.Frame(panel,bg=MENU_BACKGROUND_COLOR,width=250,height=50)
-wire_buttons_frame.place(anchor="s",relx=0.5,rely=0.9)
+wire_buttons_frame.place(anchor="s",relx=0.5,rely=0.83)
 for color in WIRE_COLORS:
     wire_buttons.append(tkButton.Button(wire_buttons_frame,width=30,height=30,text=" ",bg=wire_color(color),command=lambda x=color:select_wire(x)))
 for i in range(len(wire_buttons)):
     wire_buttons[i].place(anchor="center",relx=0.1+i/5,rely=0.5)
 update_wires()
 
+# Export Button Setup
+export_button = tkButton.Button(panel,text="EXPORT WORKSPACE",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=export_workspace)
+export_button.place(anchor="s",relx=0.5,rely=0.92)
+export_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
+
 # Exit Button Setup
-exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=220,height=40,font="Menlo 17 bold",command=save_and_exit)
+exit_button = tkButton.Button(panel,text="SAVE & EXIT",bg=BUTTON_COLOR,fg="white",width=250,height=40,font="Menlo 17 bold",command=save_and_exit)
 exit_button.place(anchor="s",relx=0.5,rely=0.99)
 exit_button.button_frame.configure(highlightthickness=5,highlightbackground="#0942b3")
+
+# Watermark Setup
+watermark = tkinter.Label(root,text=" Created with CircuitCreator ",bg="white",fg="black",font="Menlo 12")
 
 # Mouse Setup
 root.bind("<Motion>",motion)

@@ -3,6 +3,10 @@ A simple way to organize components and plan wiring patterns in a project before
 
 ## Release Notes
 
+### Version 2.3.0 (May 2022)
+- Export Workspaces to .PNG Files
+- Bug Fixes
+
 ### Version 2.2.0 (April 2022)
 - Add 'Configure Menu'
 - Save user preferences on any close, regardless of save
