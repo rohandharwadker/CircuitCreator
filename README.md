@@ -6,7 +6,7 @@ A simple way to organize components and plan wiring patterns in a project before
   <img width="300" height=300 src="logo.png">
 </div>
 
-##
+###  
 ## Release Notes
 
 ### Version 2.3.0 (May 2022)
