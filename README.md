@@ -25,6 +25,7 @@ A simple way to organize components and plan wiring patterns in a project before
 ## Release Notes
 
 ### [Version 2.3.2 (May 2022)](https://github.com/rohandharwadker/CircuitCreator/commit/64d203e7103ad5ada0250d960d7276633f40f6a5)
+- Remove unused modules
 
 ### [Version 2.3.1 (May 2022)](https://github.com/rohandharwadker/CircuitCreator/commit/6a0d681740e1edae5ec781110502efba3894ea32)
 - Replace 'Save & Exit' button with 'Export Workspace' button
