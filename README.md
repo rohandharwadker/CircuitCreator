@@ -24,6 +24,9 @@ A simple way to organize components and plan wiring patterns in a project before
 
 ## Release Notes
 
+### [Version 2.3.3 (May 2022)](https://github.com/rohandharwadker/CircuitCreator/commit/8c02cb6d61d36ae7a6a8f0a9e17181e007d96acc)
+- Change main.py to CircuitCreator.py
+
 ### [Version 2.3.2 (May 2022)](https://github.com/rohandharwadker/CircuitCreator/commit/64d203e7103ad5ada0250d960d7276633f40f6a5)
 - Remove unused modules
 
