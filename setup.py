@@ -9,7 +9,9 @@ from setuptools import setup
 
 APP = ['CircuitCreator.py']
 DATA_FILES = ["config.py","logo.png","tkButton.py"]
-OPTIONS = {}
+OPTIONS = {
+    "iconfile":"icon.icns"
+}
 
 setup(
     app=APP,
