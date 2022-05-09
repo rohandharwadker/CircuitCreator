@@ -3,7 +3,6 @@ import os
 import tkinter
 import tkButton
 import sys
-import time
 from config import *
 from tkinter import messagebox
 from tkinter import filedialog
