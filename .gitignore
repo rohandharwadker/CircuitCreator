@@ -1,6 +1,8 @@
-/__pycache__
-/save/*
-todo.txt
-/dist
-/build
+/legacy/__pycache__
+/legacy/save/*
+/legacy/todo.txt
+/legacy/dist
+/legacy/build
+/legacy/.DS_Store
+/legacy/env/
 .DS_Store
