@@ -1,5 +1,8 @@
-# Circuit Creator
+# Circuit Creator (Legacy Build)
 A simple way to organize components and plan wiring patterns in a project before actually assembling
+
+### Notice
+Circuit Creator versions 3.* and below are now classified as legacy builds and are no longer maintained. Cicuit Creator 4 is in development and the BETA will be available soon. Thank you for your continued support.
 
 #
 <div align="center">
